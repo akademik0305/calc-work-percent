@@ -12,12 +12,22 @@ const bot = new Telegraf(process.env.BOT_TOKEN)
 // bot.on(message('sticker'), (ctx) => ctx.reply('👍'))
 // bot.hears('hi', (ctx) => ctx.reply('Hey there'))
 
-bot.on("message", async (ctx) => {
-  console.log(ctx.message);
-  const data = await dailyController.saveDaily(ctx.message)
-  console.log(data);
+bot.start((ctx) => {
+  ctx.reply("Assalomu alaykum bu hisobchi bot, kunlik ishlab chiqarishni yuborsangiz hisoblab saqlab ketaman")
+})
 
-  ctx.reply(data, { reply_parameters: { message_id: ctx.message.message_id } })
+
+bot.on("message", async (ctx) => {
+  // console.log(ctx.message);
+  if (ctx.message.text.includes('Liniya')) {
+    const result = await dailyController.saveDaily(ctx.message)
+    ctx.reply(`✅ ${result.today_percent}% ga bajarild`, { reply_parameters: { message_id: ctx.message.message_id } })
+    if (result.total_percent) {
+      ctx.reply(`🏗 Zavod umumiy ${result.total_percent}% quvvatda ishladi`)
+    }
+  } else {
+    ctx.reply('Bu hisobchi bot')
+  }
 })
 
 

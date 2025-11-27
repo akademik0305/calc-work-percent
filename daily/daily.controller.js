@@ -15,9 +15,8 @@ class dailyController {
     const plates = getValue(/Jami:\s*([0-9]+)/i);
     const molds = getValue(/Jami qolip:\s*([0-9]+)/i);
 
-    const daily = await DailyService.saveDaily(workshop, plates, molds);
-    console.log(daily);
-    return daily
+    const result = await DailyService.saveDaily(workshop, plates, molds);
+    return result
   }
 }
 

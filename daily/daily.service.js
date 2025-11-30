@@ -49,6 +49,12 @@ class dailyService {
     return { today_percent, total_percent }
     // return `✅ ${today_percent.toFixed(1)}% ga bajarildi`
   }
+
+
+  async getStatistics(type, workshop) {
+    console.log(type, workshop);
+    
+  }
 }
 
 export default new dailyService()

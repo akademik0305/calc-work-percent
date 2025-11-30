@@ -12,10 +12,21 @@ class dailyController {
     };
 
     const workshop = getValue(/Liniya:\s*([0-9]+)/i)
-    const plates = getValue(/Jami:\s*([0-9]+)/i);
-    const molds = getValue(/Jami qolip:\s*([0-9]+)/i);
+    const plates = getValue(/Jami\s+([0-9]+)\s*dona/i);
+    const molds = getValue(/(\d+)\s*qolip/i);
 
     const result = await DailyService.saveDaily(workshop, plates, molds);
+    return result
+  }
+
+  async getStatistics(message){
+    console.log(message);
+    
+    const type = message.text.split(" ")[0]
+    const workshop = message.text.split(" ")[0]
+
+    const result = await DailyService.getStatistics(type, workshop)
+
     return result
   }
 }

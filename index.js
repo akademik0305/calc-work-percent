@@ -16,15 +16,26 @@ bot.start((ctx) => {
   ctx.reply("Assalomu alaykum bu hisobchi bot, kunlik ishlab chiqarishni yuborsangiz hisoblab saqlab ketaman")
 })
 
+bot.command("haftalik", async (ctx) => {
+  ctx.reply("haftalik")
+  const result = await dailyController.getStatistics(ctx.message)
+  const messageText = ctx.message.text;
+  const args = messageText.split(' ').slice(1).join(' '); // Get everything after the command
+  ctx.reply(`You said: ${args}`);
+  console.log(result);
+})
 
 bot.on("message", async (ctx) => {
-  // console.log(ctx.message);
-  if (ctx.message.text.includes('Liniya')) {
+  console.log(ctx.message.text);
+  if (ctx.message?.text?.includes('Liniya')) {
     const result = await dailyController.saveDaily(ctx.message)
     ctx.reply(`✅ ${result.today_percent}% ga bajarild`, { reply_parameters: { message_id: ctx.message.message_id } })
-    if (result.total_percent) {
-      ctx.reply(`🏗 Zavod umumiy ${result.total_percent}% quvvatda ishladi`)
-    }
+
+    setTimeout(() => {
+      if (result.total_percent) {
+        ctx.reply(`🏗 Zavod umumiy ${result.total_percent}% quvvatda ishladi`)
+      }
+    }, 1000)
   } else {
     ctx.reply('Bu hisobchi bot')
   }

@@ -19,7 +19,7 @@ class dailyService {
     let newDaily
 
     // check is exist daily
-    const dailyItem = await db.query("SELECT * FROM daily WHERE date >= CURRENT_DATE AND date < CURRENT_DATE + INTERVAL '1 day' AND workshop_id = $1", [workshop_id])
+    const dailyItem = await db.query("SELECT * FROM daily WHERE date = CURRENT_DATE AND workshop_id = $1", [workshop_id])
 
     if (dailyItem.rows.length) {
       newDaily = await db.query("UPDATE daily SET molds=$1, plates=$2, today_percent=$3 WHERE id=$4", [molds, plates, today_percent, dailyItem.rows[0].id])
@@ -29,7 +29,7 @@ class dailyService {
 
     // get all workshops and dailys
     const workshops = await db.query("SELECT * FROM workshop")
-    const dailys = await db.query("SELECT * FROM daily WHERE date >= CURRENT_DATE AND date < CURRENT_DATE + INTERVAL '1 day'");
+    const dailys = await db.query("SELECT * FROM daily WHERE date = CURRENT_DATE");
 
 
     // calc total percent
@@ -51,9 +51,28 @@ class dailyService {
   }
 
 
-  async getStatistics(type, workshop) {
-    console.log(type, workshop);
-    
+  async getStatistics(interval, workshop) {
+    console.log(interval, workshop);
+
+    const workshop_id = (await db.query("SELECT * FROM workshop WHERE id=$1", [workshop])).rows[0].id
+
+    let dailys
+    if (workshop_id) {
+      dailys = await db.query("SELECT * FROM daily WHERE workshop_id=$1 AND date >= CURRENT_DATE - $2::interval", [workshop_id, interval])
+    }
+
+
+
+    let total_percent = 0
+    if (dailys.rows.length) {
+      dailys.rows.forEach((daily) => {
+        total_percent += daily.today_percent
+      })
+
+      total_percent = Math.round(total_percent / dailys.rows.length)
+    }
+
+    return {workshop_id, total_percent}
   }
 }
 

@@ -16,17 +16,14 @@ bot.start((ctx) => {
   ctx.reply("Assalomu alaykum bu hisobchi bot, kunlik ishlab chiqarishni yuborsangiz hisoblab saqlab ketaman")
 })
 
-bot.command("haftalik", async (ctx) => {
+bot.command(["haftalik", "oylik", "yillik"], async (ctx) => {
   ctx.reply("haftalik")
   const result = await dailyController.getStatistics(ctx.message)
-  const messageText = ctx.message.text;
-  const args = messageText.split(' ').slice(1).join(' '); // Get everything after the command
-  ctx.reply(`You said: ${args}`);
   console.log(result);
+  ctx.replyWithHTML(`${result.workshop_id}-liniya <i>${result.total_percent}%</i> quvvatda ishlamoqda`)
 })
 
 bot.on("message", async (ctx) => {
-  console.log(ctx.message.text);
   if (ctx.message?.text?.includes('Liniya')) {
     const result = await dailyController.saveDaily(ctx.message)
     ctx.reply(`✅ ${result.today_percent}% ga bajarild`, { reply_parameters: { message_id: ctx.message.message_id } })

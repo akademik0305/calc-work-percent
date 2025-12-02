@@ -19,13 +19,26 @@ class dailyController {
     return result
   }
 
-  async getStatistics(message){
+  async getStatistics(message) {
     console.log(message);
-    
-    const type = message.text.split(" ")[0]
-    const workshop = message.text.split(" ")[0]
 
-    const result = await DailyService.getStatistics(type, workshop)
+    const type = message.text.split(" ")[0].replace("/", "")
+    const workshop = message.text.split(" ").slice(1).join("")
+
+    let interval = '1 day'
+
+    switch (type) {
+      case "haftalik": interval = '1 week';
+        break;
+
+      case "oylik": interval = '1 month';
+        break;
+
+      case "yillik": interval = '1 year';
+        break;
+    }
+
+    const result = await DailyService.getStatistics(interval, workshop)
 
     return result
   }

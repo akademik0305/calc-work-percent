@@ -48,7 +48,7 @@ bot.on("message", async (ctx) => {
       }
     } else {
       // ixtiyoriy: faqat kerak bo‘lsa javob berish
-      ctx.reply('Bu hisobchi bot');
+      // ctx.reply('Bu hisobchi bot');
     }
   } catch (err) {
     console.error("Bot xatosi:", err);

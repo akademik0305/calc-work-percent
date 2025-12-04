@@ -27,7 +27,7 @@ bot.start((ctx) => {
 });
 
 // Statistika komandasi
-bot.command(["bugungi","haftalik","oylik","yillik"], async (ctx) => {
+bot.command(["bugungi", "haftalik", "oylik", "yillik"], async (ctx) => {
   try {
     const { message } = await dailyController.getStatistics(ctx.message);
     await ctx.replyWithHTML(message);
@@ -57,7 +57,9 @@ bot.on("message", async (ctx) => {
 });
 
 // Launch bot
-bot.launch().then(() => {
+bot.launch({
+  polling: true,
+}).then(() => {
   console.log("Bot ishga tushdi ✅");
 });
 

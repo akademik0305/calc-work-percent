@@ -55,9 +55,7 @@ bot.on("message", async (ctx) => {
 });
 
 // Launch bot
-bot.launch({
-  polling: true,
-}).then(() => {
+bot.launch().then(() => {
   console.log("Bot ishga tushdi ✅");
 });
 

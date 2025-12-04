@@ -21,9 +21,7 @@ bot.catch((err, ctx) => {
 
 // Start komandasi
 bot.start((ctx) => {
-  ctx.reply(`Assalomu alaykum! 
-  Bu hisobchi bot. 
-  Kunlik ishlab chiqarishni yuborsangiz, hisoblab saqlab ketaman.`);
+  ctx.reply(`Assalomu alaykum!\nBu hisobchi bot.\nKunlik ishlab chiqarishni yuborsangiz, hisoblab saqlab ketaman.`);
 });
 
 // Statistika komandasi

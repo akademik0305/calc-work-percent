@@ -1,79 +1,91 @@
-import db from '../db.js'
-class dailyService {
-  async saveDaily(workshop, plates, molds) {
-    const workshop_data = await db.query('SELECT * FROM workshop WHERE number=$1', [workshop])
-    let workshop_id = 0
-    if (workshop_data.rows.length) {
-      workshop_id = workshop_data.rows[0].id
+import db from '../db.js';
+
+class DailyService {
+
+  async saveDaily(workshop, plates, molds, f_molds = 0) {
+    // 1. Workshop topish
+    const workshopData = await db.query('SELECT * FROM workshop WHERE number=$1', [workshop]);
+    if (!workshopData.rows.length) return { error: 'Liniya topilmadi' };
+
+    const workshop_id = workshopData.rows[0].id;
+    const workshop_molds = Number(workshopData.rows[0].molds);
+
+    // 2. Today percent
+    let today_percent = Math.round((molds / workshop_molds) * 100);
+
+    if (f_molds) {
+      today_percent += f_molds * 20
     }
-    // console.log(workshop_id.rows[0]);
 
-    if (!workshop_id) {
-      return 'Liniya topilmadi'
-    }
+    // 3. Daily record check & insert/update
+    const dailyItem = await db.query("SELECT * FROM daily WHERE date = CURRENT_DATE AND workshop_id = $1", [workshop_id]);
 
-    // calc today's work percentage
-    const workshop_molds = Number(workshop_data.rows[0].molds)
-    const today_percent = Math.round(molds / workshop_molds * 100)
-
-    let newDaily
-
-    // check is exist daily
-    const dailyItem = await db.query("SELECT * FROM daily WHERE date = CURRENT_DATE AND workshop_id = $1", [workshop_id])
-
+    let newDaily;
     if (dailyItem.rows.length) {
-      newDaily = await db.query("UPDATE daily SET molds=$1, plates=$2, today_percent=$3 WHERE id=$4", [molds, plates, today_percent, dailyItem.rows[0].id])
+      newDaily = await db.query(
+        "UPDATE daily SET molds=$1, plates=$2, today_percent=$3 WHERE id=$4 RETURNING *",
+        [molds, plates, today_percent, dailyItem.rows[0].id]
+      );
     } else {
-      newDaily = await db.query('INSERT INTO daily(workshop_id, molds, plates, today_percent) VALUES($1, $2, $3, $4) RETURNING *', [workshop_id, molds, plates, today_percent])
+      newDaily = await db.query(
+        'INSERT INTO daily(workshop_id, molds, plates, today_percent) VALUES($1,$2,$3,$4) RETURNING *',
+        [workshop_id, molds, plates, today_percent]
+      );
     }
 
-    // get all workshops and dailys
-    const workshops = await db.query("SELECT * FROM workshop")
-    const dailys = await db.query("SELECT * FROM daily WHERE date = CURRENT_DATE");
+    // 4. Total percent hisoblash
+    const workshops = await db.query("SELECT * FROM workshop");
+    const dailys = await db.query("SELECT * FROM daily WHERE date = CURRENT_DATE AND workshop_id != 0");
+
+    let total_percent = 0;
+    let total_molds = 0;
+    if (dailys.rows.length >= workshops.rows.length - 1) {
+      dailys.rows.forEach(daily => {
+        total_percent += daily.today_percent;
+        total_molds += daily.molds;
+      });
+      total_percent = Math.round(total_percent / (workshops.rowCount - 1));
 
 
-    // calc total percent
-    let total_percent = 0
-    if (dailys.rows.length === workshops.rows.length) {
-      // finished today daily
-
-      dailys.rows.forEach((daily) => {
-        total_percent += daily.today_percent
-      })
-
-      total_percent = Math.round(total_percent / 4)
+      // Total daily insert/update
+      const totalDaily = await db.query("SELECT * FROM daily WHERE date = CURRENT_DATE AND workshop_id = 0");
+      if (totalDaily.rows.length) {
+        await db.query(
+          "UPDATE daily SET molds=$1, today_percent=$2 WHERE id=$3",
+          [total_molds, total_percent, totalDaily.rows[0].id]
+        );
+      } else {
+        await db.query(
+          "INSERT INTO daily(workshop_id, molds, today_percent) VALUES($1,$2,$3)",
+          [0, total_molds, total_percent]
+        );
+      }
     }
 
-
-    // const newDaily = db.query('INSERT INTO')
-    return { today_percent, total_percent }
-    // return `✅ ${today_percent.toFixed(1)}% ga bajarildi`
+    return { today_percent, total_percent };
   }
 
-
   async getStatistics(interval, workshop) {
-    console.log(interval, workshop);
+    // 1. Workshop tekshirish
+    const workshopData = await db.query("SELECT * FROM workshop WHERE id=$1", [workshop]);
+    if (!workshopData.rows.length) return { error: 'Workshop topilmadi' };
 
-    const workshop_id = (await db.query("SELECT * FROM workshop WHERE id=$1", [workshop])).rows[0].id
+    const workshop_id = workshopData.rows[0].id;
 
-    let dailys
-    if (workshop_id) {
-      dailys = await db.query("SELECT * FROM daily WHERE workshop_id=$1 AND date >= CURRENT_DATE - $2::interval", [workshop_id, interval])
-    }
+    // 2. Daily records fetch
+    const dailys = await db.query(
+      "SELECT * FROM daily WHERE workshop_id=$1 AND date >= CURRENT_DATE - $2::interval",
+      [workshop_id, interval]
+    );
 
-
-
-    let total_percent = 0
+    // 3. Total percent hisoblash
+    let total_percent = 0;
     if (dailys.rows.length) {
-      dailys.rows.forEach((daily) => {
-        total_percent += daily.today_percent
-      })
-
-      total_percent = Math.round(total_percent / dailys.rows.length)
+      total_percent = Math.round(dailys.rows.reduce((sum, d) => sum + d.today_percent, 0) / dailys.rows.length);
     }
 
-    return {workshop_id, total_percent}
+    return { workshop_id, total_percent };
   }
 }
 
-export default new dailyService()
+export default new DailyService();

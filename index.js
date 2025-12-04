@@ -1,47 +1,73 @@
-import { Telegraf } from 'telegraf'
-import { message } from 'telegraf/filters';
+// index.js
+import { Telegraf } from 'telegraf';
 import { configDotenv } from 'dotenv';
-import db from './db.js';
+import pool from './db.js';
 import dailyController from './daily/daily.controller.js';
+
 configDotenv();
 
-const bot = new Telegraf(process.env.BOT_TOKEN)
+// BOT TOKEN tekshiruvi
+if (!process.env.BOT_TOKEN) {
+  console.error("BOT_TOKEN topilmadi. Iltimos .env faylini tekshiring");
+  process.exit(1);
+}
 
-// bot.start((ctx) => ctx.reply('Welcome'))
-// bot.help((ctx) => ctx.reply('Send me a sticker'))
-// bot.on(message('sticker'), (ctx) => ctx.reply('👍'))
-// bot.hears('hi', (ctx) => ctx.reply('Hey there'))
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
+// Global error handler
+bot.catch((err, ctx) => {
+  console.error("Telegram bot xatosi:", err);
+});
+
+// Start komandasi
 bot.start((ctx) => {
-  ctx.reply("Assalomu alaykum bu hisobchi bot, kunlik ishlab chiqarishni yuborsangiz hisoblab saqlab ketaman")
-})
+  ctx.reply(`Assalomu alaykum! 
+  Bu hisobchi bot. 
+  Kunlik ishlab chiqarishni yuborsangiz, hisoblab saqlab ketaman.`);
+});
 
-bot.command(["haftalik", "oylik", "yillik"], async (ctx) => {
-  ctx.reply("haftalik")
-  const result = await dailyController.getStatistics(ctx.message)
-  console.log(result);
-  ctx.replyWithHTML(`${result.workshop_id}-liniya <i>${result.total_percent}%</i> quvvatda ishlamoqda`)
-})
-
-bot.on("message", async (ctx) => {
-  if (ctx.message?.text?.includes('Liniya')) {
-    const result = await dailyController.saveDaily(ctx.message)
-    ctx.reply(`✅ ${result.today_percent}% ga bajarild`, { reply_parameters: { message_id: ctx.message.message_id } })
-
-    setTimeout(() => {
-      if (result.total_percent) {
-        ctx.reply(`🏗 Zavod umumiy ${result.total_percent}% quvvatda ishladi`)
-      }
-    }, 1000)
-  } else {
-    ctx.reply('Bu hisobchi bot')
+// Statistika komandasi
+bot.command(["bugungi","haftalik","oylik","yillik"], async (ctx) => {
+  try {
+    const { message } = await dailyController.getStatistics(ctx.message);
+    await ctx.replyWithHTML(message);
+  } catch (err) {
+    console.error(err);
+    await ctx.reply("Xatolik yuz berdi, keyinroq urinib ko‘ring");
   }
-})
+});
 
+// Daily message handler
+bot.on("message", async (ctx) => {
+  try {
+    const text = ctx.message?.text?.toLowerCase() || "";
+    if (text.includes('liniya')) {
+      const { messages } = await dailyController.saveDaily(ctx.message);
+      for (const msg of messages) {
+        await ctx.reply(msg, { reply_to_message_id: ctx.message.message_id });
+      }
+    } else {
+      // ixtiyoriy: faqat kerak bo‘lsa javob berish
+      ctx.reply('Bu hisobchi bot');
+    }
+  } catch (err) {
+    console.error("Bot xatosi:", err);
+    ctx.reply("Xatolik yuz berdi, keyinroq urinib ko‘ring");
+  }
+});
 
-// launch bot;
-bot.launch()
+// Launch bot
+bot.launch().then(() => {
+  console.log("Bot ishga tushdi ✅");
+});
 
-// Enable graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'))
-process.once('SIGTERM', () => bot.stop('SIGTERM'))
+// Graceful shutdown
+const shutdown = async () => {
+  console.log("Bot to‘xtatilmoqda...");
+  await pool.end();
+  bot.stop('SIGTERM');
+  process.exit(0);
+};
+
+process.once('SIGINT', shutdown);
+process.once('SIGTERM', shutdown);

@@ -80,8 +80,8 @@ class DailyService {
 
     // 2. Daily records fetch
     const dailys = await db.query(
-      "SELECT * FROM daily WHERE workshop_id=$1 AND date >= CURRENT_DATE - $2::interval",
-      [workshop_id, interval]
+      "SELECT * FROM daily WHERE workshop_id=$1 AND date = CURRENT_DATE",
+      [workshop_id]
     );
 
     // 3. Total percent hisoblash

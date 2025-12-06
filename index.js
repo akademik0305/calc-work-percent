@@ -3,8 +3,11 @@ import { Telegraf } from 'telegraf';
 import { configDotenv } from 'dotenv';
 import pool from './db.js';
 import dailyController from './daily/daily.controller.js';
+import express from 'express';
+import autofetch from './utils.js';
 
 configDotenv();
+autofetch()
 
 // BOT TOKEN tekshiruvi
 if (!process.env.BOT_TOKEN) {
@@ -12,6 +15,8 @@ if (!process.env.BOT_TOKEN) {
   process.exit(1);
 }
 
+const app = express();
+app.use(express.json());
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // Global error handler
@@ -79,6 +84,14 @@ const shutdown = async () => {
   bot.stop('SIGTERM');
   process.exit(0);
 };
+
+app.get("/", (req, res) => res.send("OK"));
+
+
+app.listen(webhookDomain || port, () => {
+  console.log("Server running on port: ", port);
+})
+
 
 process.once('SIGINT', shutdown);
 process.once('SIGTERM', shutdown);

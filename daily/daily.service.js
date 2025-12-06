@@ -12,14 +12,14 @@ class DailyService {
 
     // 2. Today percent
     let today_percent = Math.round((molds / workshop_molds) * 100);
-    
+
     // agar fundament bo'lsa
     if (fundaments) {
       today_percent += Math.round(fundaments * 20)
     }
 
     // agar blok bo'lsa
-    if(bloks){
+    if (bloks) {
       today_percent += Math.round((50 * bloks) / 12)
     }
 
@@ -79,10 +79,21 @@ class DailyService {
     const workshop_id = workshopData.rows[0].id;
 
     // 2. Daily records fetch
-    const dailys = await db.query(
-      "SELECT * FROM daily WHERE workshop_id=$1 AND date = CURRENT_DATE",
-      [workshop_id]
-    );
+    let dailys
+
+    if (interval === '1 day') {
+      dailys = await db.query(
+        "SELECT * FROM daily WHERE workshop_id=$1 AND date = CURRENT_DATE",
+        [workshop_id]
+      );
+    } else {
+      dailys = await db.query(
+        "SELECT * FROM daily WHERE workshop_id=$1 AND date >= CURRENT_DATE - $2::interval",
+        [workshop_id, interval]
+      );
+    }
+
+
 
     // 3. Total percent hisoblash
     let total_percent = 0;

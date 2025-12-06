@@ -4,22 +4,23 @@ class DailyController {
   async saveDaily(message) {
     const text = message.text;
 
-    const getFundaments = (text) => {
-      const lines = text.split('\n')
-      let total = 0
+    // const getFundaments = (text) => {
+    //   const lines = text.split('\n')
+    //   let total = 0
 
-      for (const line of lines) {
-        // F bilan boshlansa
-        if (/^Ф/i.test(line)) {
-          const match = line.match(/(\d+)\s+dona/i)
-          if (match) {
-            total += Number(match[1])
-          }
-        }
-      }
+    //   for (const line of lines) {
+    //     // F bilan boshlansa
+    //     if (/^Ф/i.test(line)) {
+    //       const match = line.match(/(\d+)\s+dona/i)
+    //       if (match) {
+    //         total += Number(match[1])
+    //       }
+    //     }
+    //   }
 
-      return total
-    }
+    //   return total
+    // }
+
 
     const getValue = (pattern) => {
       const match = text.match(pattern);
@@ -30,14 +31,16 @@ class DailyController {
     const workshop = getValue(/Liniya:\s*([0-9]+)/i);
     const plates = getValue(/Jami\s+([0-9]+)\s*dona/i);
     const molds = getValue(/(\d+)\s*qolip/i);
+    const fundaments = getValue(/Fundament:\s+([0-9]+)\s*qolip/i)
+    const bloks = getValue(/Blok:\s+([0-9]+)\s*qolip/i)
 
-    const is_f_modls = text.includes("Ф")
-    let f_molds = 0
-    if (is_f_modls) {
-      f_molds = getFundaments(text)
-    }
+    // const is_f_modls = text.includes("Ф")
+    // let f_molds = 0
+    // if (is_f_modls) {
+    //   f_molds = getFundaments(text)
+    // }
 
-    const result = await DailyService.saveDaily(workshop, plates, molds, f_molds);
+    const result = await DailyService.saveDaily(workshop, plates, molds, fundaments, bloks);
 
     // Agar error bo‘lsa xabarni tayyorlaymiz
     if (result.error) {

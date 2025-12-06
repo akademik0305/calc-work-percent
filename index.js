@@ -66,12 +66,15 @@ const webhookPath = `/webhook/${token}`;
 
 // Launch bot
 bot.launch(
+  // {
+  //   webhook: {
+  //     domain: webhookDomain,
+  //     port: port,
+  //     webhookPath: webhookPath
+  //   }
+  // }
   {
-    webhook: {
-      domain: webhookDomain,
-      port: port,
-      webhookPath: webhookPath
-    }
+    polling: true
   }
 ).then(() => {
   console.log("Bot ishga tushdi ✅");

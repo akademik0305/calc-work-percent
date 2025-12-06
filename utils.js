@@ -2,7 +2,7 @@ import fetch from "node-fetch";
 import { configDotenv } from 'dotenv';
 configDotenv();
 
-const DELAY = 1 // minutes
+const DELAY = 3 // minutes
 function autoFetch() {
   setInterval(() => {
     fetch(process.env.HOSTNAME)

@@ -2,7 +2,7 @@ import db from '../db.js';
 
 class DailyService {
 
-  async saveDaily(workshop, plates, molds, f_molds = 0) {
+  async saveDaily(workshop, plates, molds, fundaments = 0, bloks = 0) {
     // 1. Workshop topish
     const workshopData = await db.query('SELECT * FROM workshop WHERE number=$1', [workshop]);
     if (!workshopData.rows.length) return { error: 'Liniya topilmadi' };
@@ -12,9 +12,15 @@ class DailyService {
 
     // 2. Today percent
     let today_percent = Math.round((molds / workshop_molds) * 100);
+    
+    // agar fundament bo'lsa
+    if (fundaments) {
+      today_percent += Math.round(fundaments * 20)
+    }
 
-    if (f_molds) {
-      today_percent += f_molds * 20
+    // agar blok bo'lsa
+    if(bloks){
+      today_percent += Math.round((50 * bloks) / 12)
     }
 
     // 3. Daily record check & insert/update
